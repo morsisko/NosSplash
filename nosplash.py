@@ -3,16 +3,24 @@ import lief
 import io
 import struct
 
+end_payload = b"\x07\x53\x74\x72\x65\x74\x63\x68\x09\x00\x00\x06\x54\x49\x6D\x61\x67\x65\x06\x49\x6D\x61\x67\x65\x32\x00\x00\x06\x54\x49\x6D\x61\x67\x65\x06\x49\x6D\x61\x67\x65\x33\x00\x00\x00"
+
+def find_and_get_index(content, phrase, currentIndex=0):
+    index = content.find(phrase, currentIndex)
+    if index > -1:
+        return index + len(phrase)
+        
+    return index
+
 def extract(resource):
     buffer = io.BytesIO(resource)
     index = 0
     i = 0
     while index != -1:
-        toFind = b"Picture.Data"
-        index = content.find(toFind, index + 1)
+        index = find_and_get_index(content, b"Picture.Data", index + 1)
         
         if index != -1:
-            buffer.seek(index + len(toFind) + 1)
+            buffer.seek(index + 1)
             buffer.read(4)
             classNameLen, = struct.unpack("<B", buffer.read(1))
             name = buffer.read(classNameLen)
@@ -28,6 +36,11 @@ def extract(resource):
             i += 1
             
     print("Extracted", i, "resource(s)")
+    
+def calculate_resource_free_space(resource):
+    start = find_and_get_index(content, b"Picture.Data") + 1
+    
+    return len(resource) - start - len(payload)
 
 parser = argparse.ArgumentParser(prog="nossplash", description="Simple script utility that allows you extract and set custom splash inside EWSF.EWS")
 parser.add_argument("ewsf", help="Path to EWSF.EWS")
