@@ -42,7 +42,7 @@ def extract(resource):
 def calculate_resource_free_space(resource):
     start = find_and_get_index(content, b"Picture.Data") + 1
     
-    return len(resource) - start - len(payload)
+    return len(resource) - start - len(end_payload)
 
 parser = argparse.ArgumentParser(prog="nossplash", description="Simple script utility that allows you extract and set custom splash inside EWSF.EWS")
 parser.add_argument("ewsf", help="Path to EWSF.EWS", type=str)
@@ -79,23 +79,62 @@ if args.extract:
     extract(content)
     
 else:
-    imageFile = Image.open(args.in_name)
+    output_file = open("out.EWS", mode="wb")
+    im = Image.open(args.in_name)
     pos_of_res_in_file = file_content.find(content)
-        
+    pos_of_res_end = pos_of_res_in_file + len(content)
+    
+    im_binary = io.BytesIO()
+    
     if args.format == "bmp":
-        print("Bitmap")
-        im_binary = io.BytesIO()
-        imageFile.save(im_binary, format="bmp")
-        im_binary.seek(0)
+        im.save(im_binary, format="bmp")
         
     elif args.format == "jpeg":
-        print("Jpeg")
-        im_binary = io.BytesIO()
-        imageFile.save(im_binary, format="jpeg", quality=95)
-        im_binary.seek(0)
+        if im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info):
+            im = im.convert("RGB")
+                
+        im.save(im_binary, format="jpeg", quality=args.quality)
+        
     else:
         print("Unknown format")
+        sys.exit()
         
-print(args)
+    im_binary.seek(0)
+    image = im_binary.read()
+    
+    if len(image) > calculate_resource_free_space(content):
+        print("You image is too big to fit into this file. Try to use jpeg output format or set lower image quality.")
+        sys.exit()
+        
+    ClientHeightOff = find_and_get_index(content, b"ClientHeight", 0) + 1
+    ClientWidthOff = find_and_get_index(content, b"ClientWidth", 0) + 1
+
+    imageIndexOff = find_and_get_index(content, b"Image1", 0)
+
+    ImageHeightOff = find_and_get_index(content, b"Height", imageIndexOff) + 1
+    ImageWidthOff = find_and_get_index(content, b"Width", imageIndexOff) + 1
+    
+    bcontent = bytearray(content)
+    bcontent[ImageHeightOff:ImageHeightOff+2] = struct.pack("<H", im.height)
+    bcontent[ImageWidthOff:ImageWidthOff+2] = struct.pack("<H", im.width)
+    bcontent[ClientHeightOff:ClientHeightOff+2] = struct.pack("<H", im.height - 1)
+    bcontent[ClientWidthOff:ClientWidthOff+2] = struct.pack("<H", im.width - 1)
+    content = bytes(bcontent)
+    
+    output_file.write(file_content[:pos_of_res_in_file])
+    pictureDataIndex = find_and_get_index(content, b"Picutre.Data", 0) + 1
+    
+    output_file.write(content[:pictureDataIndex])
+    
+    if args.format == "jpeg":
+        output_file.write(struct.pack("<I", 1 + len(b"TJPEGImage") + 4 + len(image)))
+        output_file.write(b"\x0A")
+        output_file.write(b"TJPEGImage")
+        
+    output_file.write(struct.pack("<I", len(image)))
+    output_file.write(image)
+    output_file.write(end_payload)
+    output_file.write(bytes([0 for i in range(pos_of_res_end - output_file.tell())]))
+    output_file.write(file_content[output_file.tell():])
     
 
