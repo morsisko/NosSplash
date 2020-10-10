@@ -3,6 +3,7 @@ import lief
 import io
 import struct
 import sys
+import re
 from PIL import Image
 
 end_payload = b"\x07\x53\x74\x72\x65\x74\x63\x68\x09\x00\x00\x06\x54\x49\x6D\x61\x67\x65\x06\x49\x6D\x61\x67\x65\x32\x00\x00\x06\x54\x49\x6D\x61\x67\x65\x06\x49\x6D\x61\x67\x65\x33\x00\x00\x00"
@@ -106,6 +107,15 @@ else:
         print("You image is too big to fit into this file. Try to use jpeg output format or set lower image quality.")
         sys.exit()
         
+    r = re.compile(b"\x53\x8B\xD8\xBA....\x8B\xC3\xE8....\xBA....\x8B\xC3\xE8....\xA1")
+    match = r.search(file_content)
+    
+    if match:
+        bfile_content = bytearray(file_content)
+        bfile_content[match.start()+4:match.start()+6] = struct.pack("<H", im.height)
+        bfile_content[match.start()+16:match.start()+18] = struct.pack("<H", im.width)
+        file_content = bytes(bfile_content)
+        
     ClientHeightOff = find_and_get_index(content, b"ClientHeight", 0) + 1
     ClientWidthOff = find_and_get_index(content, b"ClientWidth", 0) + 1
 
@@ -122,9 +132,14 @@ else:
     content = bytes(bcontent)
     
     output_file.write(file_content[:pos_of_res_in_file])
-    pictureDataIndex = find_and_get_index(content, b"Picutre.Data", 0) + 1
+    pictureDataIndex = find_and_get_index(content, b"Picture.Data", 0) + 1
     
     output_file.write(content[:pictureDataIndex])
+    
+    if args.format == "bmp":
+        output_file.write(struct.pack("<I", 1 + len(b"TBitmap") + 4 + len(image)))
+        output_file.write(b"\x07")
+        output_file.write(b"TBitmap")
     
     if args.format == "jpeg":
         output_file.write(struct.pack("<I", 1 + len(b"TJPEGImage") + 4 + len(image)))
