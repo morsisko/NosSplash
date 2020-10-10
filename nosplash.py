@@ -51,6 +51,7 @@ parser.add_argument("--extract", help="Extracts all splashes stored inside EWSF 
 parser.add_argument("-in", help="Your image that will be displayed during game start", type=str, dest="in_name")
 parser.add_argument("-quality", help="Quality of the JPEG image, only if format=jpeg", type=int, default=95, choices=range(1,101), metavar="[1-100]")
 parser.add_argument("-format", help="Format of the output image", type=str, default="bmp", choices=["jpeg", "bmp"])
+parser.add_argument("-out", help="Output filename, works only in non extract mode", type=str, default="out.EWS")
 
 args = parser.parse_args()
 ewsf = open(args.ewsf, mode="rb")
@@ -80,7 +81,7 @@ if args.extract:
     extract(content)
     
 else:
-    output_file = open("out.EWS", mode="wb")
+    output_file = open(args.out, mode="wb")
     im = Image.open(args.in_name)
     pos_of_res_in_file = file_content.find(content)
     pos_of_res_end = pos_of_res_in_file + len(content)
