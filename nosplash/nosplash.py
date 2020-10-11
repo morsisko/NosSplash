@@ -41,7 +41,7 @@ def extract(resource):
     print("Extracted", i, "resource(s)")
     
 def calculate_resource_free_space(resource):
-    start = find_and_get_index(content, b"Picture.Data") + 1
+    start = find_and_get_index(resource, b"Picture.Data") + 1
     
     return len(resource) - start - len(end_payload)
     

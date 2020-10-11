@@ -14,6 +14,9 @@ Simple script utility that allows you to extract and set custom splash inside EW
 ## Extract all splashes
 `python -m nosplash EWSF.EWS --extract`
 
+## Minimal import
+`python -m nosplash EWSF.EWS -in image.png`
+
 ## Import your splash as bitmap
 `python -m nosplash EWSF.EWS -format bmp -in image.png -out OUT.EWS`
 
