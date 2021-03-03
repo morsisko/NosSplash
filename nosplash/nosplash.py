@@ -20,7 +20,7 @@ def extract(resource):
     index = 0
     i = 0
     while index != -1:
-        index = find_and_get_index(content, b"Picture.Data", index + 1)
+        index = find_and_get_index(resource, b"Picture.Data", index + 1)
         
         if index != -1:
             buffer.seek(index + 1)
