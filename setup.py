@@ -9,7 +9,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="nosplash",
-    version="0.2.0",
+    version="0.3.0",
     description="A simple script utility that allows you to extract and set custom splash inside EWSF.EWS",
     long_description=README,
     long_description_content_type="text/markdown",

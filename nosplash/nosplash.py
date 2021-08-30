@@ -114,8 +114,8 @@ def main():
         
         if match:
             bfile_content = bytearray(file_content)
-            bfile_content[match.start()+4:match.start()+6] = struct.pack("<H", im.height)
-            bfile_content[match.start()+16:match.start()+18] = struct.pack("<H", im.width)
+            bfile_content[match.start()+4:match.start()+6] = struct.pack("<H", im.width)
+            bfile_content[match.start()+16:match.start()+18] = struct.pack("<H", im.height)
             file_content = bytes(bfile_content)
             
         ClientHeightOff = find_and_get_index(content, b"ClientHeight", 0) + 1
